@@ -6,8 +6,8 @@ from app.binary_file import BinaryFile
 
 
 class SerialFile(BinaryFile):
-    def __init__(self, filename, record, blocking_factor, empty_key=-1,error=0):
-        BinaryFile.__init__(self, filename, record, blocking_factor, empty_key,error)
+    def __init__(self, filename, record, blocking_factor, empty_key=-1):
+        BinaryFile.__init__(self, filename, record, blocking_factor, empty_key)
 
     def init_file(self):
         with open(self.filename, "wb") as f:

@@ -6,14 +6,13 @@ from app.record import Record
 
 
 class BinaryFile:
-    def __init__(self, filename, record, blocking_factor, empty_key=-1,error=0):
+    def __init__(self, filename, record, blocking_factor, empty_key=-1):
         self.filename = filename
         self.record = record
         self.record_size = struct.calcsize(self.record.format)
         self.blocking_factor = blocking_factor
         self.block_size = self.blocking_factor * self.record_size
         self.empty_key = empty_key
-        self.error=error
 
     def write_block(self, file, block):
         binary_data = bytearray()   # Niz bita koji bi trebalo da se upise u datoteku

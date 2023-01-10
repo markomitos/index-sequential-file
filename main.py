@@ -9,7 +9,11 @@ from app.record import Record
 from app.sequential_file import SequentialFile
 from app.serial_file import SerialFile
 from app.binary_file import BinaryFile
+from app.index_sequential_file import *
 
+LRECORD = Record(LEAF, LFMT, CODING)
+HRECORD = Record(HEADER, HFMT, CODING)
+ORECORD = Record(OVERFLOW,OFMT, CODING)
 RECORD = Record(ATTRIBUTES, FMT, CODING)
 
 
@@ -21,10 +25,10 @@ def read_txt(fn):
             cols = line.split()
             rows.append({
                 "id": int(cols[0]),
-                "sending_address": cols[1],
+                "sending_address": cols[1].replace("_"," "),
                 "date": cols[2],
                 "time":cols[3],
-                "receiving_adress":cols[4],
+                "receiving_adress":cols[4].replace("_"," "),
                 "price":cols[5],
                 "status": 1
             })
@@ -36,9 +40,9 @@ def printMenu():
     print("1. Formiranje nove datoteke")
     print("2. Izbor aktivne datoteke")
     print("3. Prikaz naziva trenutne datoteke")
-    print("4. Formiranje serijske datoteke promena")
-    print("5. Formiranje sekvencijalne datoteke promena")
-    print("6. Formiranje izlazne sekvencijalne datoteke")
+    print("4. Formiranje serijske datoteke")
+    print("5. Formiranje sekvencijalne datoteke")
+    print("6. Formiranje indeks sekvencijalne datoteke")
     print("7. Prikaz svih slogova datoteke")
     print("8. Izlaz")
     print(100*"=")
@@ -68,7 +72,7 @@ def find(name, path):
 def chooseCurrentFile():
     while True:
         unos=input("Unesite ime datoteke: ").strip()
-        file=find(unos,"C:/Users/marko/Desktop/fakultet/3. semestar/op/projekat1/data")
+        file=find(unos,"C:/Users/marko/Desktop/fakultet/3. semestar/op/projekat2/index-sequential-file/data")
         if file!=False:
             return file
         else:
@@ -79,7 +83,7 @@ def showCurrentFile(active_file):
     name=active_file.split("/")
     print("Naziv trenutne datoteke je "+name[-1])
 
-#pomocna funkcija koja citasve blokove binarnog filea
+#pomocna funkcija koja cita sve blokove binarnog filea
 def readBlocks(active_file):
     binary_file = BinaryFile("data/tmp.dat",RECORD,F)
     blocks=[]
@@ -236,9 +240,9 @@ def wordifyBlocks(blocks):
                 words.append(w)
     return words
 
-#5. funkcija iz serijske datoteke promena formira sekvencijalnu datoteku
+#5. funkcija iz serijske datoteke formira sekvencijalnu datoteku
 def createSequentialFile(serial_file_location):
-    update_file= SequentialFile(SEQUENTIAL_FILENAME,RECORD,F)
+    update_file= SequentialFile(SEQUENTIAL_FILENAME,RECORD,HRECORD,OVERFLOW,LRECORD,F)
     update_file.init_file()
     blocks=readBlocks(serial_file_location)
     words=wordifyBlocks(blocks)
@@ -248,31 +252,27 @@ def createSequentialFile(serial_file_location):
         print(word)
         update_file.insert_record(word)
 
-#6. funckija formira output datoteku od sekvencijalne datoteke promena i datoteku gresaka
-def commitChanges(active_file,sequential_file_location):
-    active_blocks=readBlocks(active_file)
-    seqeuntial_blocks=readBlocks(sequential_file_location)
-    active_words=wordifyBlocks(active_blocks)
-    sequential_words=wordifyBlocks(seqeuntial_blocks)
 
+def serializeTest():
+    words=read_txt("data/test.txt")
+    serial_file=SerialFile("data/test.dat",RECORD,F)
+    serial_file.init_file()
+    for word in words:
+        serial_file.insert_record(word)
+    showWords("data/test.dat")
 
-   
+def createIndexSequential():
+    index_sequential_file=IndexSequentialFile(INDEX_SEQUENTIAL_FILENAME,RECORD,HRECORD,LRECORD,ORECORD,F)
+    index_sequential_file.init_file()
+    print(index_sequential_file.find_by_id(25252525))
+    print(index_sequential_file.find_by_id(55555555))
+    return INDEX_SEQUENTIAL_FILENAME
 
-    sorted_active_words = sorted(active_words,key=lambda d:d["id"])
-    output_filename=active_file.replace(".dat","_output.dat")
-    output_file=SequentialFile(output_filename,RECORD,F)
-    output_file.init_file()
-    print(100*"=")
-    print("Izgled output datoteke: ")
-    for word in sorted_active_words:
-        output_file.insert_record(word)
-    showWords(output_filename)
-    print("Izgled error datoteke: ")
 
 #meni aplikacije
 def menu():
     unos=""
-    active_file="data/nastava.dat"
+    active_file="data/test.dat"
     serial_file_location="data/serial.dat"
     sequental_file_location="data/sequental.dat"
     while True:
@@ -288,15 +288,16 @@ def menu():
         elif unos=="4":
             inputSerialFile()
         elif unos=="5":
-            createSequentialFile(serial_file_location)
+            createSequentialFile(active_file)
         elif unos=="6":
-            commitChanges(active_file,sequental_file_location)
+            active_file=createIndexSequential()
         elif unos=="7":
             showWords(active_file)
         elif unos=="8":
             exit()
         else:
             print("Molimo vas unesite validnu opciju!")
+
 
 
 if __name__ == "__main__":
